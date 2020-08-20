@@ -421,6 +421,20 @@ inline std::string json_parse(const std::string s, const std::string key,
 
 namespace webview {
 
+    struct CallbackParameter {
+        std::function<void(std::string)> callback;
+    };
+
+    void web_view_load_changed(WebKitWebView * web_view, WebKitLoadEvent load_event, gpointer user_data) {
+    switch (load_event) {
+        case WEBKIT_LOAD_STARTED:
+            auto uri = webkit_web_view_get_uri(web_view);
+            auto p = static_cast<CallbackParameter*>(user_data);
+            p->callback(uri);
+            break;
+    }
+}
+
 class gtk_webkit_engine {
 public:
   gtk_webkit_engine(bool debug, void *window)
@@ -436,7 +450,7 @@ public:
                      }),
                      this);
     // Initialize webview widget
-    m_webview = webkit_web_view_new();
+    m_webview = webkit_web_view_new_with_context(webkit_web_context_new());
     WebKitUserContentManager *manager =
         webkit_web_view_get_user_content_manager(WEBKIT_WEB_VIEW(m_webview));
     g_signal_connect(manager, "script-message-received::external",
@@ -482,7 +496,7 @@ public:
   }
   void *window() { return (void *)m_window; }
   void run() { gtk_main(); }
-  void terminate() { gtk_main_quit(); }
+  void terminate() { gtk_widget_destroy(m_window); gtk_main_quit(); }
   void dispatch(std::function<void()> f) {
     g_idle_add_full(G_PRIORITY_HIGH_IDLE, (GSourceFunc)([](void *f) -> int {
                       (*static_cast<dispatch_fn_t *>(f))();
@@ -531,10 +545,15 @@ public:
                                    NULL, NULL);
   }
 
+  void on_navigation(CallbackParameter* callback) {
+      g_signal_connect(WEBKIT_WEB_VIEW(m_webview), "load-changed", G_CALLBACK(webview::web_view_load_changed), callback);
+  }
+
 private:
   virtual void on_message(const std::string msg) = 0;
   GtkWidget *m_window;
   GtkWidget *m_webview;
+
 };
 
 using browser_engine = gtk_webkit_engine;

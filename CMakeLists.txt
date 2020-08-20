@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 project(webview LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 set(BUILD_WEBVIEW_EXAMPLES ON "Enables building the Webview example")
 
@@ -22,17 +22,17 @@ else ()
 endif ()
 
 if (BUILD_WEBVIEW_EXAMPLES)
-    add_executable(webview-example main.cc webview.cc webview.h)
+    add_executable(webview-example main.cc webview.h)
     target_link_libraries(webview-example ${LIBRARIES})
     target_include_directories(webview-example PRIVATE ${INCLUDE_DIRS})
 endif ()
 
-add_library(webview++ STATIC webview.cc webview.h)
+add_library(webview++ STATIC webview.h)
 set_target_properties(webview++ PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(webview++ ${LIBRARIES})
 target_include_directories(webview++ PUBLIC ${INCLUDE_DIRS} .)
 
-add_library(webview STATIC webview.cc webview.h)
+add_library(webview STATIC webview.h)
 set_target_properties(webview PROPERTIES LINKER_LANGUAGE C)
 target_link_libraries(webview ${LIBRARIES})
 target_include_directories(webview PUBLIC ${INCLUDE_DIRS} .)
